@@ -1,8 +1,9 @@
+require "json"
+
 require "numo/narray/alt"
 require "numo/linalg"
 
 class Network
-#  attr_accessor :biases, :weights
   attr_reader :num_layers, :layers, :biases, :weights
 
   def self.load(filename)
@@ -11,13 +12,14 @@ class Network
     f.close
 
     new(
-      data[layers],
-      biases: Numo::DFloat[data[biases]],
-      weights: Numo::DFloat[data[weights]]
+      data["layers"],
+      biases: Numo::DFloat[data["biases"]],
+      weights: Numo::DFloat[data["weights"]]
     )
   end
 
   def initialize(layers, biases: nil, weights: nil)
+    @layers = layers
     @num_layers = layers.size
     @biases = biases || layers[1..].map { |y| Numo::DFloat.new(y, 1).rand_norm }
     @weights = weights || layers[..-2].zip(layers[1..]).map { |x, y| Numo::DFloat.new(y, x).rand_norm / Numo::NMath.sqrt(x) }
@@ -41,14 +43,12 @@ class Network
     evaluation_cost = []
     evaluation_accuracy = []
     training_data_size = training_data.size
-    test_data_size = test_data.size
+    test_data_size = test_data&.size
 
     epochs.times do |j|
       training_data.shuffle!
 
-      mini_batches = training_data.each_slice(mini_batch_size).to_a
-
-      mini_batches.each { |mb| update_weight_and_bias(mb, eta, lmbda, training_data_size) }
+      training_data.each_slice(mini_batch_size) { |mb| update_weight_and_bias(mb, eta, lmbda, training_data_size) }
 
       puts "\nEpoch #{j} - training complete"
 
@@ -59,7 +59,7 @@ class Network
 
       if opts[:monitor_training_accuracy]
         training_accuracy << accuracy(training_data)
-        puts "Accuracy on training data: #{training_accuracy[-1]} / #{training_data_size}"
+        puts "Accuracy on training data: #{(training_accuracy[-1].fdiv(training_data_size) * 100).round(2)}%"
       end
 
       if opts[:monitor_evaluation_cost]
@@ -69,7 +69,7 @@ class Network
 
       if opts[:monitor_evaluation_accuracy]
         evaluation_accuracy << accuracy(test_data)
-        puts "Accuracy on test data: #{evaluation_accuracy[-1]} / #{test_data_size}"
+        puts "Accuracy on test data: #{(evaluation_accuracy[-1].fdiv(test_data_size) * 100).round(2)}%"
       end
     end
 

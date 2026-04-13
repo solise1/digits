@@ -10,7 +10,7 @@ def run(epochs, mini_batch_size, eta, lmbda = 0.0, load_test_data: true, **opts)
 
   puts "Test data loaded!\n\n" if load_test_data
 
-  net = Network.new([784, 30, 10])
+  net = Network.load("net.json") || Network.new([784, 30, 10])
 
   puts "Starting Stochastic Gradient Descent for Network #{net.layers}\n\n"
 
@@ -25,7 +25,4 @@ opts = {
   save: true
 }
 
-run(100, 10, 0.5, 0.1, **opts)
-
-
-#run(2, 10, 3.0)
+run(10, 10, 0.25, 5.0, **opts)
