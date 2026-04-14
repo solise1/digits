@@ -28,7 +28,6 @@ class Network
     @weights = weights || layers[..-2].zip(layers[1..]).map { |x, y| Numo::DFloat.new(y, x).rand_norm / Numo::NMath.sqrt(x) }
   end
 
-  # ? Verify that this updates correctly every step
   def feedforward(a)
     @biases.zip(@weights).each do |b, w|
       a = sigmoid(Numo::Linalg.dot(w, a) + b)
@@ -90,8 +89,8 @@ class Network
 
     mini_batch.each do |x, y|
       delta_nabla_b, delta_nabla_w = backpropagate(x, y)
-      nabla_b = nabla_b.zip(delta_nabla_b).map { |nb, dnb| nb + dnb }
-      nabla_w = nabla_w.zip(delta_nabla_w).map { |nw, dnw| nw + dnw }
+      nabla_b = nabla_b.zip(delta_nabla_b).map(&:sum)
+      nabla_w = nabla_w.zip(delta_nabla_w).map(&:sum)
     end
 
     @weights = weights.zip(nabla_w).map do |w, nw|
