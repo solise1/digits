@@ -9,7 +9,7 @@ module MnistLoader
   module_function
 
   def load_data(filename)
-    CSV.foreach(filename, headers: true, converters: :numeric).map do |row|
+    CSV.foreach(filename, converters: :numeric).map do |row|
       result = Numo::DFloat.zeros([10, 1])
       result[row[0]] = 1
 

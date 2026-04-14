@@ -6,6 +6,9 @@ require "numo/linalg"
 class Network
   attr_reader :num_layers, :layers, :biases, :weights
 
+  # Used to communicate what options can be passed to #sgd
+  VALID_SGD_OPTS = %i[monitor_training_cost monitor_training_accuracy monitor_evaluation_cost monitor_evaluation_accuracy save]
+
   def self.load(filename)
     f = File.open(filename, "r")
     data = JSON.load f
@@ -37,7 +40,7 @@ class Network
   # * training_data is a matrix of which includes the inputs and the
   # * desired outputs, eta is the learning rate, test_data is optional
   # * as it slows things down but it can allow you to track progress
-  def sgd(training_data, epochs, mini_batch_size, eta, lmbda = 0.0, test_data=nil, **opts)
+  def sgd(training_data:, epochs:, mini_batch_size:, eta:, lmbda: 0.0, test_data: nil, **opts)
     training_cost = []
     training_accuracy = []
     evaluation_cost = []
@@ -50,7 +53,7 @@ class Network
 
       training_data.each_slice(mini_batch_size) { |mb| update_weight_and_bias(mb, eta, lmbda, training_data_size) }
 
-      puts "\nEpoch #{j} - training complete"
+      puts "\nEpoch #{j} - training complete\n"
 
       if opts[:monitor_training_cost]
         training_cost << total_cost(training_data, lmbda)
@@ -59,7 +62,7 @@ class Network
 
       if opts[:monitor_training_accuracy]
         training_accuracy << accuracy(training_data)
-        puts "Accuracy on training data: #{(training_accuracy[-1].fdiv(training_data_size) * 100).round(2)}%"
+        puts "Accuracy on training data: #{training_accuracy[-1]} / #{training_data_size}"
       end
 
       if opts[:monitor_evaluation_cost]
@@ -69,7 +72,7 @@ class Network
 
       if opts[:monitor_evaluation_accuracy]
         evaluation_accuracy << accuracy(test_data)
-        puts "Accuracy on test data: #{(evaluation_accuracy[-1].fdiv(test_data_size) * 100).round(2)}%"
+        puts "Accuracy on test data: #{evaluation_accuracy[-1]} / #{test_data_size}"
       end
     end
 
